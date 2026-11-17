@@ -1,0 +1,14 @@
+{
+  "name": "huohuo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "火火 — 接在你自己的 Dify 应用上的中文对话页面",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/stream.test.mjs test/proxy.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
