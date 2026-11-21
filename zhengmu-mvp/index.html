@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>证目 — 证明目的工作台</title>
+  <title>证目 — 证明目的线性流程</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
@@ -11,189 +11,43 @@
 </head>
 <body>
   <div id="app">
-    <!-- Top bar -->
     <header class="topbar">
-      <div class="brand" data-go="home">
+      <div class="brand">
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">证目</span>
-        <span class="brand-tag">证明目的工作台</span>
+        <span class="brand-tag">证明目的 · 线性工作流</span>
       </div>
-      <nav class="steps" aria-label="流程步骤">
-        <button class="step" data-step="home" type="button">入口</button>
-        <button class="step" data-step="intake" type="button">证据组</button>
-        <button class="step" data-step="result" type="button">证明目的</button>
-        <button class="step" data-step="diff" type="button">对照修订</button>
-        <button class="step" data-step="confirm" type="button">确认导出</button>
-      </nav>
+      <p class="topbar-lede">简洁 · 可核对 · 可溯源 · 律师终审 — 不做一键可上庭</p>
       <div class="topbar-meta">
         <span class="pill soft">演示案件 · 交通事故人伤</span>
       </div>
     </header>
 
-    <main>
-      <!-- SCREEN 1: Home -->
-      <section id="screen-home" class="screen active" data-screen="home">
-        <div class="hero-plane">
-          <div class="hero-copy">
-            <p class="eyebrow">诉讼律师 · 证据目录专用</p>
-            <h1>证目</h1>
-            <p class="lede">把证据目录里的「证明目的」写得简洁、可核对、可溯源。法条可核验，对照修订由律师终审——不做「一键可上庭文书」。</p>
-            <div class="cta-row">
-              <button class="btn primary" data-go="intake" type="button">开始编制证明目的</button>
-              <button class="btn ghost" data-go="intake" data-load-sample="1" type="button">载入交通事故样例</button>
-            </div>
-            <ul class="promise-list">
-              <li>短句绑定事实（日期 / 金额）</li>
-              <li>无出处引用标「待核」</li>
-              <li>对照修订 · 律师点确认才导出</li>
-            </ul>
+    <main class="flow-shell">
+      <!-- Horizontal overview spine -->
+      <section class="flow-overview" aria-label="用户旅程线性图">
+        <div class="overview-head">
+          <div>
+            <p class="eyebrow">用户旅程 · 线性图</p>
+            <h1>证目工作流</h1>
           </div>
-          <aside class="hero-aside" aria-label="产品边界">
-            <h2>产品边界</h2>
-            <p>AI 没有办法帮人担责。证目只出可核验的建议稿，终审权始终在主办律师。</p>
-            <dl>
-              <div><dt>做</dt><dd>证明目的生成 · 引用核验 · 对照修订 · 导出段落</dd></div>
-              <div><dt>不做</dt><dd>一键起诉状 / 答辩状「可上庭」</dd></div>
-            </dl>
-          </aside>
+          <button class="btn ghost tiny" id="btn-collapse-all" type="button">收起全部节点</button>
         </div>
+        <ol class="spine-h" id="spine-h"></ol>
       </section>
 
-      <!-- SCREEN 2: Intake -->
-      <section id="screen-intake" class="screen" data-screen="intake">
-        <div class="screen-head">
-          <div>
-            <h2>证据组与待证事实</h2>
-            <p>选择案由模板，确认证据组与争议焦点。生成前可脱敏预览。</p>
-          </div>
-          <button class="btn primary" id="btn-generate" type="button">生成证明目的</button>
-        </div>
-
-        <div class="intake-grid">
-          <div class="panel">
-            <div class="panel-head">
-              <h3>案件信息</h3>
-              <label class="toggle">
-                <input type="checkbox" id="desensitize" checked />
-                <span>脱敏分析</span>
-              </label>
-            </div>
-            <label class="field">
-              <span>案由模板</span>
-              <select id="case-type">
-                <option value="traffic" selected>机动车交通事故责任纠纷 · 人伤</option>
-                <option value="contract">买卖合同纠纷</option>
-                <option value="labor">劳动争议 · 工伤</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>案件名称</span>
-              <input id="case-name" type="text" value="张某诉李某、某保险公司机动车交通事故责任纠纷" />
-            </label>
-            <label class="field">
-              <span>待证事实 / 争议焦点</span>
-              <textarea id="facts" rows="5">1. 原告因本次交通事故受伤并经法医鉴定构成伤残；
-2. 原告住院治疗产生的医疗费数额及必要性；
-3. 原告诊疗经过与后续治疗关联性。</textarea>
-            </label>
-          </div>
-
-          <div class="panel">
-            <div class="panel-head">
-              <h3>证据组清单</h3>
-              <button class="btn tiny ghost" id="btn-add-evidence" type="button">+ 添加证据</button>
-            </div>
-            <div id="evidence-list" class="evidence-list"></div>
-            <p class="hint">演示数据来自交通事故人伤证据目录常见结构；实际使用可粘贴摘要或导入清单。</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- SCREEN 3: Result -->
-      <section id="screen-result" class="screen" data-screen="result">
-        <div class="screen-head">
-          <div>
-            <h2>证明目的结果</h2>
-            <p>短句列表已生成。带出处的引用可核验；无出处标「待核」，不得伪装为已确认。</p>
-          </div>
-          <div class="cta-row">
-            <button class="btn ghost" data-go="intake" type="button">返回调整</button>
-            <button class="btn primary" data-go="diff" type="button">进入对照修订</button>
-          </div>
-        </div>
-
-        <div class="status-bar">
-          <span class="stat"><strong id="stat-total">0</strong> 条证明目的</span>
-          <span class="stat ok"><strong id="stat-verified">0</strong> 已核验</span>
-          <span class="stat warn"><strong id="stat-pending">0</strong> 待核</span>
-        </div>
-
-        <div id="purpose-list" class="purpose-list"></div>
-      </section>
-
-      <!-- SCREEN 4: Diff -->
-      <section id="screen-diff" class="screen" data-screen="diff">
-        <div class="screen-head">
-          <div>
-            <h2>对照修订</h2>
-            <p>左侧为客户稿 / AI 初稿，右侧为证目建议稿。逐条接受、改写或拒绝——律师保留终审权。</p>
-          </div>
-          <div class="cta-row">
-            <button class="btn ghost" data-go="result" type="button">查看引用</button>
-            <button class="btn primary" id="btn-to-confirm" type="button">律师终审确认</button>
-          </div>
-        </div>
-
-        <div class="diff-toolbar">
-          <button class="btn tiny" id="btn-accept-all" type="button">全部接受建议</button>
-          <button class="btn tiny ghost" id="btn-reset-diff" type="button">重置决定</button>
-          <span class="hint inline" id="diff-progress">已处理 0 / 0</span>
-        </div>
-
-        <div id="diff-list" class="diff-list"></div>
-      </section>
-
-      <!-- SCREEN 5: Confirm / Export -->
-      <section id="screen-confirm" class="screen" data-screen="confirm">
-        <div class="screen-head">
-          <div>
-            <h2>确认导出</h2>
-            <p>导出前必须由主办律师确认。导出内容为证据目录「证明目的」段落，便于贴入所内模板——不是可上庭整套文书。</p>
-          </div>
-        </div>
-
-        <div class="confirm-layout">
-          <div class="panel">
-            <h3>终审清单</h3>
-            <ul class="check-list" id="confirm-checklist"></ul>
-            <label class="confirm-box">
-              <input type="checkbox" id="lawyer-confirm" />
-              <span>我已核验引用与表述，确认本证明目的段落可由本人贴入证据目录模板使用。AI 不承担法律责任。</span>
-            </label>
-            <div class="cta-row">
-              <button class="btn primary" id="btn-export" type="button" disabled>导出证据目录段落</button>
-              <button class="btn ghost" id="btn-copy" type="button" disabled>复制到剪贴板</button>
-            </div>
-            <p class="hint" id="export-msg"></p>
-          </div>
-          <div class="panel preview-panel">
-            <div class="panel-head">
-              <h3>导出预览</h3>
-              <span class="pill soft">Word / 表格可贴</span>
-            </div>
-            <pre id="export-preview" class="export-preview"></pre>
-          </div>
-        </div>
+      <!-- Vertical expandable spine -->
+      <section class="flow-detail" aria-label="逐步展开">
+        <div class="spine-v" id="spine-v"></div>
       </section>
     </main>
 
     <footer class="footer">
-      <span>证目 MVP Demo · 课程作业演示</span>
+      <span>证目 MVP Demo · 线性流程图原型</span>
       <span>Human-in-the-loop · 不做一键可上庭</span>
     </footer>
   </div>
 
-  <!-- Citation modal -->
   <dialog id="cite-dialog">
     <form method="dialog" class="cite-sheet">
       <header>
