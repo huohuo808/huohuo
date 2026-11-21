@@ -1,10 +1,22 @@
 {
   "name": "zhengmu-mvp",
   "version": "1.0.0",
-  "private": true,
-  "description": "证目 — 证明目的工作台 MVP Demo（静态可运行）",
+  "main": "index.js",
+  "dependencies": {
+    "@expo/metro-runtime": "~58.0.17",
+    "expo": "~58.0.26",
+    "expo-clipboard": "~58.0.4",
+    "expo-status-bar": "~58.0.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-web": "^0.21.4"
+  },
   "scripts": {
-    "start": "python3 -m http.server 5173 --bind 0.0.0.0",
-    "start:node": "npx --yes serve -l 5173 ."
-  }
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "private": true
 }

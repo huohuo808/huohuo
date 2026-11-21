@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "证目",
+    "slug": "zhengmu-mvp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0f5c4c"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zhengmu.mvp"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f5c4c",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.zhengmu.mvp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": null
+      }
+    }
+  }
+}
