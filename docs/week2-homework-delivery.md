@@ -22,7 +22,7 @@
 
 ## 二、市场与机会
 
-**竞品 / 替代（≥2，带来源）**  
+**竞品 / 替代（≥2，带来源）**
 
 | 类型 | 代表 | 事实 / 受访者反馈 |
 |------|------|-------------------|
@@ -38,7 +38,8 @@
 
 ## 三、需求与范围
 
-**优先级**  
+**优先级**
+
 | 级 | 需求 |
 |----|------|
 | P0 | 选证据/待证事实 → 生成证明目的；引用核对原文；待核阻断定稿；对照修订；律师确认；定稿导出=确认版 |
@@ -58,13 +59,10 @@
 
 | 要求 | 可点击入口 |
 |------|------------|
-| 产品功能清单 | [docs/product-feature-list.md](https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/product-feature-list.md) |
-| 产品原型 | [走查 docs/prototype-walkthrough.md](https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/prototype-walkthrough.md) · [截图 docs/media-prototype/](https://github.com/huohuo808/huohuo/tree/cursor/zhengmu-mvp-demo-bd2f/docs/media-prototype) |
-| 需求文档 | [docs/requirements-prd.md](https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/requirements-prd.md) |
+| 产品功能清单 | [product-feature-list.md](https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/product-feature-list.md) |
+| 产品原型 | [prototype-walkthrough.md](https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/prototype-walkthrough.md) · [截图 media-prototype/](https://github.com/huohuo808/huohuo/tree/cursor/zhengmu-mvp-demo-bd2f/docs/media-prototype) |
+| 需求文档 | [requirements-prd.md](https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/requirements-prd.md) |
 | MVP Demo（APP） | [zhengmu-mvp/](https://github.com/huohuo808/huohuo/tree/cursor/zhengmu-mvp-demo-bd2f/zhengmu-mvp)（Expo） |
-
-**本交付 Word（请用直链下载，避免空文件）**  
-https://github.com/huohuo808/huohuo/raw/cursor/zhengmu-mvp-demo-bd2f/docs/week2-homework-delivery.docx
 
 **Demo 本地打开**
 
@@ -74,7 +72,8 @@ cd zhengmu-mvp && npm i && npm run check && npx expo start
 ```
 
 **其他链接**  
+- 本交付 Markdown：https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/week2-homework-delivery.md  
 - PR：https://github.com/huohuo808/huohuo/pull/2  
-- HTML：https://htmlpreview.github.io/?https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/zhengmu-web/index.html  
+- HTML 预览：https://htmlpreview.github.io/?https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/zhengmu-web/index.html  
 - 样例案：交通事故人伤（`zhengmu-mvp/demo-case/`）  
-- 竞品详表（带来源标注）：[docs/competitive-analysis.md](https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/competitive-analysis.md)
+- 竞品详表：[competitive-analysis.md](https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/docs/competitive-analysis.md)
