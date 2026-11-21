@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "证目",
+    "slug": "zhengmu-mvp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0f5c4c"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zhengmu.mvp",
+      "infoPlist": {
+        "NSCameraUsageDescription": "证目需要使用摄像头扫描纸质证据，生成证据组摘要。",
+        "NSPhotoLibraryUsageDescription": "证目可从相册选取证据照片导入证据组。"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f5c4c",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.zhengmu.mvp",
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "证目需要使用摄像头扫描纸质证据，生成证据组摘要。",
+          "photosPermission": "证目可从相册选取证据照片导入证据组。"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": null
+      }
+    }
+  }
+}
