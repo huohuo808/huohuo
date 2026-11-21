@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>第二周作业交付 · 证目</title>
+<style>
+  body { font-family: "宋体", SimSun, serif; font-size: 12pt; line-height: 1.6; margin: 2.5cm; color: #111; }
+  h1 { font-family: "黑体", SimHei, sans-serif; font-size: 18pt; text-align: center; }
+  h2 { font-family: "黑体", SimHei, sans-serif; font-size: 14pt; margin-top: 1.2em; }
+  table { border-collapse: collapse; width: 100%; margin: 0.6em 0 1em; }
+  th, td { border: 1px solid #333; padding: 6px 8px; vertical-align: top; font-size: 10.5pt; }
+  th { background: #f0f0f0; }
+  .label { font-weight: bold; }
+  code, pre { font-family: Consolas, monospace; font-size: 10pt; }
+</style>
+</head>
+<body>
+<h1>第二周作业交付 · 证目</h1>
+<p><span class="label">产品：</span>证目</p>
+<p><span class="label">一句话：</span>帮诉讼律师把证据目录里的「证明目的」写得简洁、可核对、可溯源；律师终审，不做一键可上庭文书。</p>
+
+<h2>一、问题与用户</h2>
+<p><span class="label">目标用户：</span>民商事诉讼主办律师（主）；助理/实习生出初稿（次）。MVP 不做当事人自助出文书、不做法院内网。</p>
+<p class="label">典型场景（2）</p>
+<ol>
+  <li>举证前编证据目录：证明目的要短句、绑日期/金额，通用 AI 写「像一坨」、引用常错。</li>
+  <li>客户甩来 AI 稿：律师要核验引用、改简洁、对照修订后终审。</li>
+</ol>
+<p><span class="label">核心痛点：</span>证明目的质量差 → 幻觉/瞎编法条 → 文书不能直接用 → 专业库贵、账号摩擦。</p>
+<p>底线：AI 不能替人担责；不做「一键可上庭」。</p>
+
+<h2>二、市场与机会</h2>
+<p class="label">竞品 / 替代（≥2）</p>
+<table>
+  <tr><th>类型</th><th>代表</th><th>问题</th></tr>
+  <tr><td>通用 AI</td><td>豆包 / DeepSeek</td><td>能写但不简洁、幻觉重</td></tr>
+  <tr><td>办公 AI</td><td>workbuddy</td><td>习惯「对照修改稿 + 人审」，可借鉴</td></tr>
+  <tr><td>专业库</td><td>法宝 / 威科</td><td>检索可信但贵、体验旧，不解决「写成证明目的短句」</td></tr>
+  <tr><td>法律 AI</td><td>法天使</td><td>更准，但席位/抢登摩擦</td></tr>
+</table>
+<p><span class="label">差异化切入：</span>只做证据目录「证明目的」：事实绑定短句 + 引用可核验（待核/已核）+ 对照修订 + 律师点确认才定稿。</p>
+
+<h2>三、需求与范围</h2>
+<p class="label">优先级</p>
+<table>
+  <tr><th>级</th><th>需求</th></tr>
+  <tr><td>P0</td><td>证据组导入（含摄像头扫描）→ 生成证明目的短句；引用待核/已核；对照修订；律师确认；简易导出</td></tr>
+  <tr><td>P0</td><td>证据 ↔ 待证事实对齐</td></tr>
+  <tr><td>P1</td><td>脱敏、原文核对、目录骨架导出、对方证据三性质证草稿</td></tr>
+  <tr><td>P2</td><td>复杂案时间线、录音转写、类案策略</td></tr>
+</table>
+<p><span class="label">主流程：</span>建案 → 导入/扫描证据 → 待证事实 → 生成 → 核验(待核) → 对照修订 → <b>律师确认</b> → 导出贴模板</p>
+<p><span class="label">不做：</span>一键起诉状/答辩状可上庭；AI 直接改卷宗原文；全案材料自动整理当主卖点。</p>
+
+<h2>四、第1周作业提交（文档链接）</h2>
+<table>
+  <tr><th>要求</th><th>路径</th></tr>
+  <tr><td>产品功能清单</td><td>docs/product-feature-list.md</td></tr>
+  <tr><td>产品原型</td><td>docs/prototype-walkthrough.md + media/prototype/00–05.png</td></tr>
+  <tr><td>需求文档</td><td>docs/requirements-prd.md</td></tr>
+  <tr><td>MVP Demo（APP）</td><td>仓库 zhengmu-mvp/（Expo）；说明见 docs/mvp-demo-readme.md</td></tr>
+</table>
+<p class="label">Demo 本地打开</p>
+<pre>cd zhengmu-mvp &amp;&amp; npm i &amp;&amp; npx expo start
+# 手机装 Expo Go 扫码
+
+cd zhengmu-web &amp;&amp; python3 -m http.server 8090
+# http://127.0.0.1:8090/</pre>
+<p class="label">线上备用</p>
+<ul>
+  <li>HTML：https://htmlpreview.github.io/?https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/zhengmu-web/index.html</li>
+  <li>PR：https://github.com/huohuo808/huohuo/pull/2</li>
+  <li>Cursor App（Private）：https://zhengmu.apps.grok.bot</li>
+</ul>
+<p><span class="label">样例案：</span>交通事故人伤（docs/demo-case/）</p>
+</body>
+</html>
