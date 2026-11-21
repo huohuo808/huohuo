@@ -104,6 +104,13 @@ main { flex: 1; padding: 1.25rem 1.1rem 2rem; }
   font-size: .9rem; line-height: 1.55;
 }
 .confirm input { margin-top: .2rem; }
+.scan-bar { display: flex; flex-wrap: wrap; gap: .5rem; margin: .65rem 0 1rem; }
+.scan-bar .btn { flex: 1; min-width: 8.5rem; }
+.scan-thumb {
+  width: 100%; max-height: 10rem; object-fit: cover; border-radius: 8px;
+  margin: .5rem 0 .25rem; background: #ebe4d8; border: 1px solid var(--line);
+}
+.hidden-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .preview {
   white-space: pre-wrap; font-size: .85rem; line-height: 1.65; color: var(--soft);
   background: #faf8f4; border: 1px dashed var(--line); border-radius: 10px; padding: .9rem; max-height: 16rem; overflow: auto;
@@ -182,13 +189,32 @@ const STEPS = [
   { id: "export", label: "导出" },
 ];
 
-const EVIDENCE = [
+const SCAN_TEMPLATES = [
+  { name: "扫描件 · 责任认定书片段", summary: "摄像头识别：事故日期约 2024-03-12；责任划分含「全部责任」字样（演示 OCR，请人工核对）。" },
+  { name: "扫描件 · 医疗费票据", summary: "摄像头识别：票据金额疑似 ¥48,632.50；开票单位含「医院」（演示 OCR，请人工核对）。" },
+  { name: "扫描件 · 鉴定意见书封面", summary: "摄像头识别：鉴定日期约 2024-06-08；伤残等级疑似「十级」（演示 OCR，请人工核对）。" },
+  { name: "扫描件 · 病历首页", summary: "摄像头识别：住院起止约 2024-03-12 至 03-28；诊断含骨折相关表述（演示 OCR，请人工核对）。" },
+];
+
+let EVIDENCE = [
   { id: "e1", no: "证据1", name: "交通事故认定书", summary: "2024年3月12日事故；认定被告李某负全部责任。" },
   { id: "e2", no: "证据2", name: "住院病历及出院小结", summary: "2024年3月12日至3月28日住院；右胫腓骨骨折等。" },
   { id: "e3", no: "证据3", name: "医疗费票据及费用清单", summary: "住院医疗费合计人民币 48,632.50 元。" },
   { id: "e4", no: "证据4", name: "司法鉴定意见书", summary: "2024年6月8日鉴定：右下肢损伤构成十级伤残。" },
   { id: "e5", no: "证据5", name: "后续治疗门诊病历", summary: "出院后复查及康复治疗记录（部分票据日期模糊）。" },
 ];
+let scanIdx = 0;
+
+function addScannedEvidence(uri) {
+  const t = SCAN_TEMPLATES[scanIdx % SCAN_TEMPLATES.length];
+  scanIdx += 1;
+  const n = EVIDENCE.length + 1;
+  EVIDENCE = [
+    ...EVIDENCE,
+    { id: `scan-${Date.now()}`, no: `证据${n}`, name: t.name, summary: t.summary, source: "camera", uri },
+  ];
+  render();
+}
 
 const PURPOSES = [
   {
@@ -288,9 +314,19 @@ function body() {
         <div class="card" style="background:#0f5c4c;color:#fff;border:0"><h3 style="color:#fff">产品边界</h3>
         <div class="meta" style="color:rgba(255,255,255,.88)">AI 没有办法帮人担责。不做一键可上庭文书。</div></div>`;
     case "evidence":
-      return `<h2>证据组</h2><p>演示用五组证据（含日期与金额）。</p>${EVIDENCE.map(
-        (e) => `<div class="card"><h3>${e.no}　${e.name}</h3><div class="meta">${e.summary}</div></div>`
-      ).join("")}`;
+      return `<h2>证据组</h2>
+        <p>手机可调起摄像头扫描纸质证据；演示生成 OCR 摘要（需人工核对）。</p>
+        <div class="scan-bar">
+          <button class="btn" type="button" id="btn-scan-cam">摄像头扫描</button>
+          <button class="btn ghost" type="button" id="btn-scan-file">相册 / 文件</button>
+        </div>
+        <input class="hidden-file" id="cam-input" type="file" accept="image/*" capture="environment" />
+        <input class="hidden-file" id="file-input" type="file" accept="image/*" />
+        ${EVIDENCE.map((e) => {
+          const badge = e.source === "camera" ? `<span class="badge ok">扫描</span>` : "";
+          const img = e.uri ? `<img class="scan-thumb" src="${e.uri}" alt="${e.no} 预览" />` : "";
+          return `<div class="card"><div class="row" style="justify-content:space-between;margin:0"><h3>${e.no}　${e.name}</h3>${badge}</div>${img}<div class="meta">${e.summary}</div></div>`;
+        }).join("")}`;
     case "facts":
       return `<h2>待证事实</h2><p>对齐争议焦点，便于证明目的绑定日期/金额。</p>
         <textarea readonly>${FACTS}</textarea>`;
@@ -416,12 +452,27 @@ document.body.addEventListener("click", (e) => {
       $("#msg").textContent = "已复制。";
     });
   }
+  if (e.target.id === "btn-scan-cam") {
+    $("#cam-input")?.click();
+    return;
+  }
+  if (e.target.id === "btn-scan-file") {
+    $("#file-input")?.click();
+  }
 });
 
 document.body.addEventListener("change", (e) => {
   if (e.target.id === "lawyer") {
     state.lawyerOk = e.target.checked;
     render();
+    return;
+  }
+  if (e.target.id === "cam-input" || e.target.id === "file-input") {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const uri = URL.createObjectURL(file);
+    addScannedEvidence(uri);
   }
 });
 

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import {
   SafeAreaView,
   View,
@@ -10,9 +10,11 @@ import {
   Alert,
   Platform,
   Share,
+  Image,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import * as Clipboard from "expo-clipboard";
+import * as ImagePicker from "expo-image-picker";
 import { colors } from "./src/theme";
 import {
   STEPS,
@@ -22,6 +24,7 @@ import {
   DEFAULT_CASE_TYPE,
   DEFAULT_FACTS,
 } from "./src/data";
+import { buildScannedEvidence } from "./src/scanEvidence";
 
 const stepIndex = (id) => STEPS.findIndex((s) => s.id === id);
 
@@ -79,8 +82,61 @@ export default function App() {
   const [facts, setFacts] = useState(DEFAULT_FACTS);
   const [citeModal, setCiteModal] = useState(null);
   const [exportMsg, setExportMsg] = useState("");
+  const [scanBusy, setScanBusy] = useState(false);
+  const scanCountRef = useRef(0);
 
   const goTab = (tab) => setScreen(tab);
+
+  const appendScanned = useCallback((uri) => {
+    const item = buildScannedEvidence(evidence.length, uri, scanCountRef.current);
+    scanCountRef.current += 1;
+    setEvidence((prev) => [...prev, item]);
+  }, [evidence.length]);
+
+  const scanWithCamera = useCallback(async () => {
+    if (scanBusy) return;
+    setScanBusy(true);
+    try {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("需要摄像头权限", "请在系统设置中允许证目使用摄像头，以便扫描纸质证据。");
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        quality: 0.7,
+        allowsEditing: false,
+      });
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+      appendScanned(result.assets[0].uri);
+    } catch (err) {
+      Alert.alert("扫描失败", Platform.OS === "web" ? "当前浏览器可能不支持摄像头；请用手机 Expo Go 打开本 App。" : String(err?.message || err));
+    } finally {
+      setScanBusy(false);
+    }
+  }, [appendScanned, scanBusy]);
+
+  const pickFromLibrary = useCallback(async () => {
+    if (scanBusy) return;
+    setScanBusy(true);
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("需要相册权限", "请允许访问相册以导入证据照片。");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.7,
+      });
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+      appendScanned(result.assets[0].uri);
+    } catch (err) {
+      Alert.alert("导入失败", String(err?.message || err));
+    } finally {
+      setScanBusy(false);
+    }
+  }, [appendScanned, scanBusy]);
 
   const runGenerate = useCallback((thenId) => {
     setPurposes(MOCK_PURPOSES.map((p) => ({ ...p })));
@@ -181,17 +237,40 @@ export default function App() {
       case "evidence":
         return (
           <View>
-            <Text style={styles.lede}>交通事故人伤证据组样例。</Text>
+            <Text style={styles.lede}>可用手机摄像头扫描纸质证据；演示会生成 OCR 摘要（需人工核对）。</Text>
+            <View style={styles.scanRow}>
+              <Btn
+                testID="scan-camera"
+                title={scanBusy ? "处理中…" : "摄像头扫描"}
+                onPress={scanWithCamera}
+                disabled={scanBusy}
+                style={{ flex: 1 }}
+              />
+              <Btn
+                testID="scan-album"
+                title="相册导入"
+                variant="ghost"
+                onPress={pickFromLibrary}
+                disabled={scanBusy}
+                style={{ flex: 1 }}
+              />
+            </View>
             {evidence.map((e) => (
               <View key={e.id} style={styles.itemCard}>
-                <Text style={styles.itemTitle}>
-                  {e.no}　{e.name}
-                </Text>
+                <View style={styles.rowBetween}>
+                  <Text style={[styles.itemTitle, { flex: 1 }]}>
+                    {e.no}　{e.name}
+                  </Text>
+                  {e.source === "camera" ? <Pill tone="soft">扫描</Pill> : null}
+                </View>
+                {e.uri ? (
+                  <Image source={{ uri: e.uri }} style={styles.scanThumb} accessibilityLabel={`${e.no}扫描预览`} />
+                ) : null}
                 <Text style={styles.itemBody}>{e.summary}</Text>
               </View>
             ))}
             <Btn
-              title="+ 添加证据"
+              title="+ 手动添加摘要"
               variant="ghost"
               onPress={() => {
                 const n = evidence.length + 1;
@@ -772,6 +851,15 @@ const styles = StyleSheet.create({
   strong: { fontWeight: "700", color: colors.ink },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginVertical: 6 },
   rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  scanRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
+  scanThumb: {
+    width: "100%",
+    height: 140,
+    borderRadius: 8,
+    marginTop: 8,
+    marginBottom: 6,
+    backgroundColor: "#ebe4d8",
+  },
   diffBox: {
     borderWidth: 1,
     borderColor: colors.line,
