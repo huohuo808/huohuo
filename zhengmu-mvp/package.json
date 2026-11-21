@@ -1,0 +1,10 @@
+{
+  "name": "zhengmu-mvp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "证目 — 证明目的工作台 MVP Demo（静态可运行）",
+  "scripts": {
+    "start": "python3 -m http.server 5173 --bind 0.0.0.0",
+    "start:node": "npx --yes serve -l 5173 ."
+  }
+}
