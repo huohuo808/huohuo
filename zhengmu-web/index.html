@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>证目 — 证明目的演示</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="top">
+      <div class="brand">
+        <span class="mark"></span>
+        <strong>证目</strong>
+        <span class="tag">证明目的演示网页</span>
+      </div>
+      <span class="pill">样例 · 交通事故人伤</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">诉讼律师 · 证据目录专用</p>
+        <h1>证目</h1>
+        <p class="lede">上传/选择证据组 → 生成简洁证明目的 → 引用已核验/待核 → 对照修订 → 律师确认导出。不做一键可上庭文书。</p>
+        <button class="btn primary" id="btn-start" type="button">开始演示流程</button>
+      </section>
+
+      <section class="flow" id="flow" hidden>
+        <div class="chips" id="chips"></div>
+        <div class="panel" id="panel"></div>
+        <div class="nav-row">
+          <button class="btn ghost" id="btn-prev" type="button">上一步</button>
+          <button class="btn primary" id="btn-next" type="button">下一步</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>证目 HTML 演示 · 样例数据</span>
+      <span>人审终控 · 不做一键可上庭</span>
+    </footer>
+  </div>
+  <dialog id="dlg">
+    <form method="dialog" class="dlg">
+      <header><h3 id="dlg-title">引用</h3><button class="btn tiny ghost" value="ok">关闭</button></header>
+      <div id="dlg-body"></div>
+    </form>
+  </dialog>
+  <script src="./app.js"></script>
+</body>
+</html>
