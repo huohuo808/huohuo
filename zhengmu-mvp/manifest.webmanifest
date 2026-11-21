@@ -1,0 +1,19 @@
+{
+  "name": "证目 — 证明目的工作台",
+  "short_name": "证目",
+  "description": "诉讼律师证明目的线性工作流 APP Demo",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f5c4c",
+  "theme_color": "#0f5c4c",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "./icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

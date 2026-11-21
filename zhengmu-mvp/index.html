@@ -2,50 +2,149 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>证目 — 证明目的线性流程</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#0f5c4c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="证目" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="description" content="证目 — 证明目的工作台 APP Demo" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.svg" />
+  <title>证目 APP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div id="app">
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true"></span>
-        <span class="brand-name">证目</span>
-        <span class="brand-tag">证明目的 · 线性工作流</span>
-      </div>
-      <p class="topbar-lede">简洁 · 可核对 · 可溯源 · 律师终审 — 不做一键可上庭</p>
-      <div class="topbar-meta">
-        <span class="pill soft">演示案件 · 交通事故人伤</span>
-      </div>
-    </header>
+  <div class="stage">
+    <aside class="stage-copy" aria-hidden="true">
+      <p class="eyebrow">MVP Demo · APP</p>
+      <h1>证目</h1>
+      <p>证明目的工作台 · 可核验 · 人审终控</p>
+      <p class="stage-hint">右侧为手机 App 壳；作业演示请操作手机内界面。</p>
+    </aside>
 
-    <main class="flow-shell">
-      <!-- Horizontal overview spine -->
-      <section class="flow-overview" aria-label="用户旅程线性图">
-        <div class="overview-head">
-          <div>
-            <p class="eyebrow">用户旅程 · 线性图</p>
-            <h1>证目工作流</h1>
-          </div>
-          <button class="btn ghost tiny" id="btn-collapse-all" type="button">收起全部节点</button>
+    <div class="phone" id="phone">
+      <div class="phone-bezel">
+        <div class="phone-notch" aria-hidden="true"></div>
+        <div class="app" id="app">
+          <!-- Splash -->
+          <section class="view splash active" id="view-splash" data-view="splash">
+            <div class="splash-inner">
+              <div class="app-icon" aria-hidden="true">证</div>
+              <h1>证目</h1>
+              <p>证明目的 · 线性工作流</p>
+              <button class="btn primary wide" id="btn-enter" type="button">打开 App</button>
+              <p class="splash-meta">人审终控 · 不做一键可上庭</p>
+            </div>
+          </section>
+
+          <!-- Home -->
+          <section class="view" id="view-home" data-view="home">
+            <header class="status-bar">
+              <span class="time" id="clock">9:41</span>
+              <span class="status-icons">▮▮▮ ◎</span>
+            </header>
+            <div class="nav-bar">
+              <h1>证目</h1>
+              <span class="pill soft">演示 · 人伤</span>
+            </div>
+            <div class="scroll">
+              <div class="hero-card">
+                <p class="eyebrow">诉讼律师专用</p>
+                <h2>证明目的工作台</h2>
+                <p>简洁、可核对、可溯源。法条可核验，对照修订由律师终审。</p>
+                <button class="btn primary wide" data-tab="flow" type="button">开始线性流程</button>
+              </div>
+              <div class="home-grid">
+                <button class="tile" data-tab="flow" data-open="reach" type="button">
+                  <span class="tile-ico">01</span>
+                  <strong>建案</strong>
+                  <span>案由模板</span>
+                </button>
+                <button class="tile" data-tab="flow" data-open="verify" type="button">
+                  <span class="tile-ico">核</span>
+                  <strong>待核</strong>
+                  <span>引用核验</span>
+                </button>
+                <button class="tile" data-tab="flow" data-open="diff" type="button">
+                  <span class="tile-ico">订</span>
+                  <strong>修订</strong>
+                  <span>对照稿</span>
+                </button>
+                <button class="tile" data-tab="case" type="button">
+                  <span class="tile-ico">案</span>
+                  <strong>案件</strong>
+                  <span>样例信息</span>
+                </button>
+              </div>
+              <div class="boundary-card">
+                <strong>产品边界</strong>
+                <p>AI 没有办法帮人担责。只出可核验建议稿，不做一键可上庭文书。</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Flow (linear) -->
+          <section class="view" id="view-flow" data-view="flow">
+            <header class="status-bar">
+              <span class="time">9:41</span>
+              <span class="status-icons">▮▮▮ ◎</span>
+            </header>
+            <div class="nav-bar">
+              <h1>线性流程</h1>
+              <button class="btn tiny ghost" id="btn-collapse-all" type="button">收起</button>
+            </div>
+            <div class="flow-progress" id="flow-progress" aria-label="流程进度"></div>
+            <div class="scroll" id="flow-scroll">
+              <div class="spine-v" id="spine-v"></div>
+            </div>
+          </section>
+
+          <!-- Case -->
+          <section class="view" id="view-case" data-view="case">
+            <header class="status-bar">
+              <span class="time">9:41</span>
+              <span class="status-icons">▮▮▮ ◎</span>
+            </header>
+            <div class="nav-bar"><h1>案件</h1></div>
+            <div class="scroll">
+              <div class="case-card">
+                <h2>张某诉李某、某保险公司</h2>
+                <p>机动车交通事故责任纠纷 · 人伤</p>
+                <dl>
+                  <div><dt>模板</dt><dd>交通事故人伤</dd></div>
+                  <div><dt>脱敏</dt><dd>已开启</dd></div>
+                  <div><dt>证据组</dt><dd id="case-ev-count">5</dd></div>
+                  <div><dt>流程进度</dt><dd id="case-progress">未开始</dd></div>
+                </dl>
+                <button class="btn primary wide" data-tab="flow" type="button">回到流程</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Bottom tab bar -->
+          <nav class="tabbar" id="tabbar" hidden>
+            <button class="tab" data-tab="home" type="button">
+              <span class="tab-ico">⌂</span>
+              <span>首页</span>
+            </button>
+            <button class="tab" data-tab="flow" type="button">
+              <span class="tab-ico">☰</span>
+              <span>流程</span>
+            </button>
+            <button class="tab" data-tab="case" type="button">
+              <span class="tab-ico">▣</span>
+              <span>案件</span>
+            </button>
+          </nav>
+          <div class="home-indicator" aria-hidden="true"></div>
         </div>
-        <ol class="spine-h" id="spine-h"></ol>
-      </section>
-
-      <!-- Vertical expandable spine -->
-      <section class="flow-detail" aria-label="逐步展开">
-        <div class="spine-v" id="spine-v"></div>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <span>证目 MVP Demo · 线性流程图原型</span>
-      <span>Human-in-the-loop · 不做一键可上庭</span>
-    </footer>
+      </div>
+    </div>
   </div>
 
   <dialog id="cite-dialog">
