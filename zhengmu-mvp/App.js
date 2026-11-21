@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useRef } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -23,8 +23,17 @@ import {
   DEFAULT_CASE_NAME,
   DEFAULT_CASE_TYPE,
   DEFAULT_FACTS,
+  FACT_OPTIONS,
 } from "./src/data";
 import { buildScannedEvidence } from "./src/scanEvidence";
+import {
+  purposesForSelection,
+  hasPendingCitation,
+  canExportFinal,
+  sessionFingerprint,
+  buildExportText,
+  finalPurposeText,
+} from "./src/gates";
 
 const stepIndex = (id) => STEPS.findIndex((s) => s.id === id);
 
@@ -74,10 +83,14 @@ export default function App() {
   const [farthest, setFarthest] = useState(0);
   const [generated, setGenerated] = useState(false);
   const [evidence, setEvidence] = useState(SAMPLE_EVIDENCE);
+  const [selectedEvidenceIds, setSelectedEvidenceIds] = useState(() => SAMPLE_EVIDENCE.map((e) => e.id));
+  const [selectedFactIds, setSelectedFactIds] = useState(() => FACT_OPTIONS.map((f) => f.id));
   const [purposes, setPurposes] = useState([]);
   const [decisions, setDecisions] = useState({});
   const [editedTexts, setEditedTexts] = useState({});
   const [lawyerOk, setLawyerOk] = useState(false);
+  const [confirmedFingerprint, setConfirmedFingerprint] = useState("");
+  const [confirmedExportText, setConfirmedExportText] = useState("");
   const [caseName, setCaseName] = useState(DEFAULT_CASE_NAME);
   const [facts, setFacts] = useState(DEFAULT_FACTS);
   const [citeModal, setCiteModal] = useState(null);
@@ -87,11 +100,26 @@ export default function App() {
 
   const goTab = (tab) => setScreen(tab);
 
+  const factsTextFromSelection = useCallback((ids) => {
+    const set = new Set(ids);
+    return FACT_OPTIONS.filter((f) => set.has(f.id))
+      .map((f, i) => `${i + 1}. ${f.label}`)
+      .join("\n");
+  }, []);
+
   const appendScanned = useCallback((uri) => {
     const item = buildScannedEvidence(evidence.length, uri, scanCountRef.current);
     scanCountRef.current += 1;
     setEvidence((prev) => [...prev, item]);
+    setSelectedEvidenceIds((prev) => [...prev, item.id]);
   }, [evidence.length]);
+
+  const invalidateConfirm = useCallback((msg) => {
+    setLawyerOk(false);
+    setConfirmedFingerprint("");
+    setConfirmedExportText("");
+    if (msg) setExportMsg(msg);
+  }, []);
 
   const scanWithCamera = useCallback(async () => {
     if (scanBusy) return;
@@ -138,18 +166,23 @@ export default function App() {
     }
   }, [appendScanned, scanBusy]);
 
-  const runGenerate = useCallback((thenId) => {
-    setPurposes(MOCK_PURPOSES.map((p) => ({ ...p })));
-    setDecisions({});
-    setEditedTexts({});
-    setGenerated(true);
-    setLawyerOk(false);
-    setFarthest((f) => Math.max(f, stepIndex("generate")));
-    const next = thenId || "generate";
-    setActive(next);
-    setFarthest((f) => Math.max(f, stepIndex(next)));
-    setScreen("flow");
-  }, []);
+  const runGenerate = useCallback(
+    (thenId) => {
+      const matched = purposesForSelection(MOCK_PURPOSES, selectedEvidenceIds).map((p) => ({ ...p }));
+      const picked = matched.length ? matched : [];
+      setPurposes(picked);
+      setDecisions({});
+      setEditedTexts({});
+      setGenerated(true);
+      invalidateConfirm(picked.length ? "" : "当前所选证据无法匹配样例证明目的，请勾选预置证据组。");
+      setFarthest((f) => Math.max(f, stepIndex("generate")));
+      const next = thenId || "generate";
+      setActive(next);
+      setFarthest((f) => Math.max(f, stepIndex(next)));
+      setScreen("flow");
+    },
+    [selectedEvidenceIds, invalidateConfirm]
+  );
 
   const openStep = useCallback(
     (id) => {
@@ -167,42 +200,64 @@ export default function App() {
     [farthest, generated, runGenerate]
   );
 
-  const finalText = (p) => {
-    const d = decisions[p.id];
-    if (d === "reject") return p.draftClient;
-    if (d === "edit") return editedTexts[p.id] || p.suggestion;
-    return p.suggestion;
-  };
-
-  const exportText = useMemo(() => {
-    if (!purposes.length) return "（尚未生成证明目的）";
-    return [
-      "证据目录 · 证明目的（证目 Expo App 导出）",
-      `案件：${caseName}`,
-      `案由：${DEFAULT_CASE_TYPE}`,
-      "",
-      ...purposes.map((p, i) => {
-        const ev = p.evidenceIds
-          .map((id) => evidence.find((e) => e.id === id)?.no)
-          .filter(Boolean)
-          .join("、");
-        const flag = p.citation.status === "pending" ? "【待核】" : "【已核验】";
-        return `${i + 1}. ${ev}\n证明目的：${finalText(p)}\n引用：${p.citation.label} ${flag}`;
+  const fingerprint = useMemo(
+    () =>
+      sessionFingerprint({
+        evidence,
+        selectedEvidenceIds,
+        facts,
+        selectedFacts: selectedFactIds,
+        decisions,
+        editedTexts,
+        purposes,
       }),
-      "",
-      "——",
-      "声明：本段落经主办律师确认后导出，仅供贴入所内证据目录模板；不构成可上庭整套文书。",
-    ].join("\n");
-  }, [purposes, caseName, evidence, decisions, editedTexts]);
+    [evidence, selectedEvidenceIds, facts, selectedFactIds, decisions, editedTexts, purposes]
+  );
+
+  const pending = useMemo(() => hasPendingCitation(purposes), [purposes]);
+
+  const liveExportText = useMemo(
+    () =>
+      buildExportText({
+        purposes,
+        caseName,
+        caseType: DEFAULT_CASE_TYPE,
+        evidence,
+        decisions,
+        editedTexts,
+        mode: pending ? "draft" : "final",
+      }),
+    [purposes, caseName, evidence, decisions, editedTexts, pending]
+  );
+
+  const exportGate = useMemo(
+    () =>
+      canExportFinal({
+        lawyerOk,
+        hasPending: pending,
+        fingerprint,
+        confirmedFingerprint,
+      }),
+    [lawyerOk, pending, fingerprint, confirmedFingerprint]
+  );
+
+  const exportText = exportGate.ok && confirmedExportText ? confirmedExportText : liveExportText;
+
+  useEffect(() => {
+    if (!lawyerOk) return;
+    if (confirmedFingerprint && fingerprint !== confirmedFingerprint) {
+      invalidateConfirm("证据、金额或修订内容已变，旧确认已失效，请重新确认。");
+    }
+  }, [fingerprint, lawyerOk, confirmedFingerprint, invalidateConfirm]);
 
   const summaryFor = (id) => {
     switch (id) {
       case "reach":
         return "人伤模板";
       case "evidence":
-        return `${evidence.length} 组`;
+        return `已选 ${selectedEvidenceIds.length}/${evidence.length}`;
       case "facts":
-        return "3 项";
+        return `已选 ${selectedFactIds.length}`;
       case "generate":
         return generated ? `${purposes.length} 条` : "待生成";
       case "verify":
@@ -211,9 +266,9 @@ export default function App() {
       case "diff":
         return generated ? `${Object.keys(decisions).length}/${purposes.length}` : "待修订";
       case "confirm":
-        return lawyerOk ? "已确认" : "待确认";
+        return lawyerOk && exportGate.ok ? "已确认" : pending ? "有待核" : "待确认";
       case "export":
-        return lawyerOk ? "可导出" : "锁定";
+        return exportGate.ok ? "可定稿" : "锁定";
       default:
         return "";
     }
@@ -237,7 +292,10 @@ export default function App() {
       case "evidence":
         return (
           <View>
-            <Text style={styles.lede}>可用手机摄像头扫描纸质证据；演示会生成 OCR 摘要（需人工核对）。</Text>
+            <Text style={styles.lede}>勾选参与生成的证据组。可保留预置样例，或用摄像头/相册追加（扫描结果为模拟 OCR）。</Text>
+            <View style={styles.mockBanner}>
+              <Text style={styles.mockBannerText}>摄像头 / 相册导入仅演示：摘要带【模拟 OCR】标记，非真实识别。</Text>
+            </View>
             <View style={styles.scanRow}>
               <Btn
                 testID="scan-camera"
@@ -255,55 +313,165 @@ export default function App() {
                 style={{ flex: 1 }}
               />
             </View>
-            {evidence.map((e) => (
-              <View key={e.id} style={styles.itemCard}>
-                <View style={styles.rowBetween}>
-                  <Text style={[styles.itemTitle, { flex: 1 }]}>
-                    {e.no}　{e.name}
-                  </Text>
-                  {e.source === "camera" ? <Pill tone="soft">扫描</Pill> : null}
-                </View>
-                {e.uri ? (
-                  <Image source={{ uri: e.uri }} style={styles.scanThumb} accessibilityLabel={`${e.no}扫描预览`} />
-                ) : null}
-                <Text style={styles.itemBody}>{e.summary}</Text>
-              </View>
-            ))}
+            <View style={styles.row}>
+              <Btn
+                title="全选样例"
+                variant="ghost"
+                onPress={() => setSelectedEvidenceIds(evidence.filter((e) => e.source === "preset").map((e) => e.id))}
+              />
+              <Btn
+                title="仅医疗费(e2+e3)"
+                variant="ghost"
+                testID="select-medical"
+                onPress={() => setSelectedEvidenceIds(["e2", "e3"])}
+              />
+            </View>
+            {evidence.map((e) => {
+              const on = selectedEvidenceIds.includes(e.id);
+              return (
+                <Pressable
+                  key={e.id}
+                  testID={`ev-${e.id}`}
+                  style={[styles.itemCard, on && styles.itemCardSelected]}
+                  onPress={() => {
+                    setSelectedEvidenceIds((prev) =>
+                      prev.includes(e.id) ? prev.filter((id) => id !== e.id) : [...prev, e.id]
+                    );
+                  }}
+                >
+                  <View style={styles.rowBetween}>
+                    <Text style={[styles.itemTitle, { flex: 1 }]}>
+                      {on ? "☑" : "☐"} {e.no}　{e.name}
+                    </Text>
+                    {e.source === "camera" || e.ocrMock ? <Pill tone="warn">模拟 OCR</Pill> : <Pill tone="soft">预置</Pill>}
+                  </View>
+                  {e.uri ? (
+                    <Image source={{ uri: e.uri }} style={styles.scanThumb} accessibilityLabel={`${e.no}扫描预览`} />
+                  ) : null}
+                  <Text style={styles.itemBody}>{e.summary}</Text>
+                  {e.id === "e3" || (e.amount != null && e.source === "preset") ? (
+                    <View
+                      style={{ marginTop: 8 }}
+                      onStartShouldSetResponder={() => true}
+                      onPress={(ev) => ev?.stopPropagation?.()}
+                    >
+                      <Text style={styles.label}>金额（修改会作废已确认）</Text>
+                      <TextInput
+                        testID={`amount-${e.id}`}
+                        accessibilityLabel={`amount-${e.id}`}
+                        style={styles.input}
+                        keyboardType="decimal-pad"
+                        value={e.amount == null ? "" : String(e.amount)}
+                        onChangeText={(v) => {
+                          const num = v.trim() === "" ? null : Number(v);
+                          setEvidence((prev) =>
+                            prev.map((row) =>
+                              row.id === e.id
+                                ? {
+                                    ...row,
+                                    amount: Number.isFinite(num) ? num : row.amount,
+                                    summary: Number.isFinite(num)
+                                      ? `住院医疗费合计人民币 ${num.toFixed(2)} 元。`
+                                      : row.summary,
+                                    originalSnippet: Number.isFinite(num)
+                                      ? `${row.sourceNote || ""}｜金额：¥${num.toFixed(2)}`
+                                      : row.originalSnippet,
+                                  }
+                                : row
+                            )
+                          );
+                        }}
+                      />
+                    </View>
+                  ) : null}
+                </Pressable>
+              );
+            })}
             <Btn
-              title="+ 手动添加摘要"
+              title="更换：移除证据5（后续门诊）"
               variant="ghost"
+              testID="swap-drop-e5"
               onPress={() => {
-                const n = evidence.length + 1;
-                setEvidence((prev) => [
-                  ...prev,
-                  { id: `e${Date.now()}`, no: `证据${n}`, name: "补充证据（演示）", summary: "请填写摘要。" },
-                ]);
+                setEvidence((prev) => prev.filter((e) => e.id !== "e5"));
+                setSelectedEvidenceIds((prev) => prev.filter((id) => id !== "e5"));
               }}
               style={{ marginTop: 8 }}
             />
-            <Btn testID="next-facts" title="下一步：待证事实" onPress={() => openStep("facts")} style={{ marginTop: 8 }} />
+            <Btn
+              title="恢复预置样例"
+              variant="ghost"
+              onPress={() => {
+                setEvidence(SAMPLE_EVIDENCE);
+                setSelectedEvidenceIds(SAMPLE_EVIDENCE.map((e) => e.id));
+                scanCountRef.current = 0;
+              }}
+            />
+            <Btn
+              testID="next-facts"
+              title="下一步：待证事实"
+              disabled={!selectedEvidenceIds.length}
+              onPress={() => openStep("facts")}
+              style={{ marginTop: 8 }}
+            />
           </View>
         );
       case "facts":
         return (
           <View>
-            <Text style={styles.lede}>对齐争议焦点，便于绑定日期与金额。</Text>
-            <TextInput style={[styles.input, { minHeight: 110 }]} value={facts} onChangeText={setFacts} multiline />
-            <Btn testID="next-generate" title="下一步：生成证明目的" onPress={() => openStep("generate")} style={{ marginTop: 10 }} />
+            <Text style={styles.lede}>勾选要对齐的待证事实（可改文案）。</Text>
+            {FACT_OPTIONS.map((f) => {
+              const on = selectedFactIds.includes(f.id);
+              return (
+                <Pressable
+                  key={f.id}
+                  testID={`fact-${f.id}`}
+                  style={[styles.itemCard, on && styles.itemCardSelected]}
+                  onPress={() => {
+                    setSelectedFactIds((prev) => {
+                      const next = prev.includes(f.id) ? prev.filter((id) => id !== f.id) : [...prev, f.id];
+                      setFacts(factsTextFromSelection(next));
+                      return next;
+                    });
+                  }}
+                >
+                  <Text style={styles.itemBody}>
+                    {on ? "☑" : "☐"} {f.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+            <Text style={styles.label}>事实摘要（可编辑）</Text>
+            <TextInput
+              style={[styles.input, { minHeight: 90 }]}
+              value={facts}
+              onChangeText={setFacts}
+              multiline
+            />
+            <Btn
+              testID="next-generate"
+              title="下一步：生成证明目的"
+              disabled={!selectedFactIds.length}
+              onPress={() => openStep("generate")}
+              style={{ marginTop: 10 }}
+            />
           </View>
         );
       case "generate":
         if (!generated) {
           return (
             <View>
-              <Text style={styles.lede}>生成简洁、事实绑定的证明目的短句（Mock）。</Text>
+              <Text style={styles.lede}>
+                按已选证据匹配样例短句。路演可先点「仅医疗费」再生成 → 通常得到 1 条。
+              </Text>
+              <Text style={styles.hint}>已选证据 {selectedEvidenceIds.length} · 待证事实 {selectedFactIds.length}</Text>
               <Btn testID="btn-generate" title="生成证明目的" onPress={() => runGenerate("generate")} />
             </View>
           );
         }
         return (
           <View>
-            <Text style={styles.lede}>已生成 {purposes.length} 条。进入引用核验。</Text>
+            <Text style={styles.lede}>已生成 {purposes.length} 条（Mock，绑定已选证据）。</Text>
+            {!purposes.length && <Text style={styles.hint}>无匹配条目：请勾选 e2+e3 等预置证据后重新生成。</Text>}
             {purposes.map((p, i) => (
               <View key={p.id} style={styles.itemCard}>
                 <Text style={styles.itemTitle}>
@@ -318,7 +486,14 @@ export default function App() {
                 </View>
               </View>
             ))}
-            <Btn testID="next-verify" title="下一步：引用核验" onPress={() => openStep("verify")} style={{ marginTop: 8 }} />
+            <Btn testID="btn-regenerate" title="按当前选择重新生成" variant="ghost" onPress={() => runGenerate("generate")} />
+            <Btn
+              testID="next-verify"
+              title="下一步：引用核验"
+              disabled={!purposes.length}
+              onPress={() => openStep("verify")}
+              style={{ marginTop: 8 }}
+            />
           </View>
         );
       case "verify": {
@@ -349,7 +524,8 @@ export default function App() {
                     <Pill tone={isPending ? "warn" : "ok"}>{isPending ? "待核" : "已核验"}</Pill>
                   </View>
                   <Btn
-                    title={isPending ? "待核原因" : "核验引用"}
+                    testID={`cite-${p.id}`}
+                    title={isPending ? "待核 · 核对原文" : "引用核对原文"}
                     variant="ghost"
                     onPress={() => setCiteModal(p)}
                     style={{ marginTop: 8 }}
@@ -423,6 +599,7 @@ export default function App() {
                     onChangeText={(v) => setEditedTexts((t) => ({ ...t, [p.id]: v }))}
                   />
                 )}
+                <Text style={styles.hint}>定稿文案：{finalPurposeText(p, decisions, editedTexts)}</Text>
               </View>
             ))}
             <Btn
@@ -443,63 +620,115 @@ export default function App() {
       case "confirm":
         return (
           <View>
-            <Text style={styles.lede}>导出前必须由主办律师确认。</Text>
+            <Text style={styles.lede}>定稿导出前须律师确认；含「待核」不可定稿。修改金额/证据/修订后确认自动失效。</Text>
+            {pending && (
+              <View style={styles.mockBanner}>
+                <Text style={styles.mockBannerText}>当前含待核引用，不能勾选定稿确认。请回到核验处理或去掉对应证明目的。</Text>
+              </View>
+            )}
             {purposes.map((p, idx) => {
               const d = decisions[p.id] || "accept";
               const label = d === "accept" ? "已接受" : d === "reject" ? "保留原稿" : "已改写";
               return (
-                <View key={p.id} style={[styles.itemCard, styles.rowBetween]}>
-                  <Text style={styles.itemBody}>
-                    {idx + 1}. {label}
-                  </Text>
-                  <Pill tone={p.citation.status === "pending" ? "warn" : "ok"}>
-                    {p.citation.status === "pending" ? "待核" : "已核验"}
-                  </Pill>
+                <View key={p.id} style={styles.itemCard}>
+                  <View style={styles.rowBetween}>
+                    <Text style={styles.itemBody}>
+                      {idx + 1}. {label}
+                    </Text>
+                    <Pill tone={p.citation.status === "pending" ? "warn" : "ok"}>
+                      {p.citation.status === "pending" ? "待核" : "已核验"}
+                    </Pill>
+                  </View>
+                  <Text style={styles.itemBody}>{finalPurposeText(p, decisions, editedTexts)}</Text>
                 </View>
               );
             })}
-            <Pressable testID="lawyer-confirm" style={styles.confirmBox} onPress={() => setLawyerOk((v) => !v)}>
-              <Text style={styles.confirmCheck}>{lawyerOk ? "☑" : "☐"}</Text>
+            <Pressable
+              testID="lawyer-confirm"
+              accessibilityLabel="lawyer-confirm"
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: !!(lawyerOk && exportGate.ok) }}
+              style={[styles.confirmBox, pending && { opacity: 0.5 }]}
+              onPress={() => {
+                if (pending) {
+                  const msg = "存在待核引用时不可律师确认定稿。";
+                  if (Platform.OS === "web" && typeof window !== "undefined" && window.alert) {
+                    window.alert(`不能定稿\n${msg}`);
+                  } else {
+                    Alert.alert("不能定稿", msg);
+                  }
+                  return;
+                }
+                if (lawyerOk) {
+                  invalidateConfirm("");
+                  return;
+                }
+                const snap = buildExportText({
+                  purposes,
+                  caseName,
+                  caseType: DEFAULT_CASE_TYPE,
+                  evidence,
+                  decisions,
+                  editedTexts,
+                  mode: "final",
+                });
+                setConfirmedExportText(snap);
+                setConfirmedFingerprint(fingerprint);
+                setLawyerOk(true);
+                setExportMsg("已锁定当前定稿版本。");
+              }}
+            >
+              <Text style={styles.confirmCheck}>{lawyerOk && exportGate.ok ? "☑" : "☐"}</Text>
               <Text style={[styles.itemBody, { flex: 1 }]}>
-                我已核验引用与表述。AI 不承担法律责任。
+                我已核验引用与表述，确认导出该版本。AI 不承担法律责任。
               </Text>
             </Pressable>
-            <Btn testID="next-export" title="下一步：导出" disabled={!lawyerOk} onPress={() => openStep("export")} />
+            <Btn
+              testID="next-export"
+              title="下一步：导出定稿"
+              disabled={!exportGate.ok}
+              onPress={() => openStep("export")}
+            />
           </View>
         );
       case "export":
         return (
           <View>
-            <Text style={styles.lede}>导出证明目的段落，贴入所内模板——非整套上庭文书。</Text>
+            <Text style={styles.lede}>定稿导出内容 = 律师确认时锁定的版本。未确认或含待核时不可导出定稿。</Text>
+            {!exportGate.ok && <Text style={styles.hint}>锁定原因：{exportGate.reason}</Text>}
             <View style={styles.row}>
               <Btn
-                title="导出/分享"
-                disabled={!lawyerOk}
+                testID="btn-export-final"
+                title="导出定稿/分享"
+                disabled={!exportGate.ok}
                 onPress={async () => {
-                  if (!lawyerOk) return;
+                  if (!exportGate.ok) return;
                   try {
                     await Share.share({ message: exportText });
-                    setExportMsg("已调起系统分享。");
+                    setExportMsg("已调起系统分享（定稿）。");
                   } catch {
                     setExportMsg("分享取消或失败。");
                   }
                 }}
               />
               <Btn
-                title="复制"
+                testID="btn-copy-final"
+                title="复制定稿"
                 variant="ghost"
-                disabled={!lawyerOk}
+                disabled={!exportGate.ok}
                 onPress={async () => {
-                  if (!lawyerOk) return;
+                  if (!exportGate.ok) return;
                   await Clipboard.setStringAsync(exportText);
-                  setExportMsg("已复制到剪贴板。");
-                  if (Platform.OS === "web") Alert.alert("已复制");
+                  setExportMsg("已复制定稿到剪贴板。");
+                  if (Platform.OS === "web") Alert.alert("已复制定稿");
                 }}
               />
             </View>
-            {!lawyerOk && <Text style={styles.hint}>请先勾选律师确认。</Text>}
             {!!exportMsg && <Text style={styles.hint}>{exportMsg}</Text>}
-            <Text style={styles.exportPreview}>{exportText}</Text>
+            <Text style={styles.label}>预览</Text>
+            <Text style={styles.exportPreview} testID="export-preview">
+              {exportGate.ok ? exportText : liveExportText}
+            </Text>
           </View>
         );
       default:
@@ -659,7 +888,7 @@ export default function App() {
           <View style={styles.modal}>
             <View style={styles.rowBetween}>
               <Text style={styles.heroTitle}>
-                {citeModal.citation.status === "pending" ? "引用待核" : "引用核验"}
+                {citeModal.citation.status === "pending" ? "待核 · 核对原文" : "引用核对原文"}
               </Text>
               <Btn title="关闭" variant="ghost" onPress={() => setCiteModal(null)} />
             </View>
@@ -671,8 +900,28 @@ export default function App() {
             </Pill>
             <Text style={styles.label}>来源</Text>
             <Text style={styles.itemBody}>{citeModal.citation.source || "— 无可靠出处 —"}</Text>
+            {!!citeModal.citation.path && (
+              <>
+                <Text style={styles.label}>核验路径</Text>
+                <Text style={styles.itemBody}>{citeModal.citation.path}</Text>
+              </>
+            )}
             <Text style={styles.label}>说明</Text>
             <Text style={styles.itemBody}>{citeModal.citation.note}</Text>
+            <Text style={styles.label}>关联证据原文摘要</Text>
+            {(citeModal.evidenceIds || []).map((id) => {
+              const e = evidence.find((row) => row.id === id);
+              if (!e) return null;
+              return (
+                <View key={id} style={[styles.diffBox, { marginTop: 6 }]}>
+                  <Text style={styles.diffLabel}>
+                    {e.no}　{e.name}
+                    {e.ocrMock ? " · 模拟 OCR" : ""}
+                  </Text>
+                  <Text style={styles.itemBody}>{e.originalSnippet || e.summary}</Text>
+                </View>
+              );
+            })}
           </View>
         </View>
       )}
@@ -818,6 +1067,16 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 14,
   },
+  mockBanner: {
+    backgroundColor: colors.warnBg,
+    borderColor: "#e0c28a",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+  },
+  mockBannerText: { color: colors.warn, fontSize: 13, lineHeight: 18 },
+  itemCardSelected: { borderColor: colors.accent, backgroundColor: "#f3f8f6" },
   itemCard: {
     borderWidth: 1,
     borderColor: colors.line,

@@ -23,13 +23,22 @@ export const SAMPLE_EVIDENCE = casePack.evidenceGroups.map((e) => ({
   summary: e.summary,
   date: e.date,
   amount: e.amount,
+  sourceNote: e.sourceNote || "",
+  source: "preset",
+  originalSnippet: [e.sourceNote, e.summary, e.amount != null ? `金额：¥${Number(e.amount).toFixed(2)}` : null]
+    .filter(Boolean)
+    .join("｜"),
 }));
 
 export const MOCK_PURPOSES = mockPurposes;
 
 export const DEFAULT_CASE_NAME = casePack.caseName;
 export const DEFAULT_CASE_TYPE = casePack.causeOfAction;
-export const DEFAULT_FACTS = casePack.factsToProve.map((f, i) => `${i + 1}. ${f}`).join("\n");
+export const FACT_OPTIONS = casePack.factsToProve.map((f, i) => ({
+  id: `f${i + 1}`,
+  label: f,
+}));
+export const DEFAULT_FACTS = FACT_OPTIONS.map((f, i) => `${i + 1}. ${f.label}`).join("\n");
 
 export const DEMO_CASE_META = {
   caseId: casePack.caseId,
