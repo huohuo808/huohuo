@@ -1,13 +1,12 @@
 # 证目 · Expo App（MVP Demo）
 
-这是 **Expo / React Native 原生 App 工程**，不是 HTML 网页壳。
+**Expo / React Native 原生 App**，不是 HTML 网页壳。
 
-线性流程：建案 → 证据组 → 待证事实 → 生成证明目的 → 引用核验(待核) → 对照修订 → 律师确认 → 导出。
+完整中文本地打开说明（给 PM）：见 Project 文档  
+`docs/mvp-demo-readme.md`  
+演示案件包：`demo-case/`（与 `docs/demo-case/` 同步）。
 
-## 用 Expo Go 打开（推荐）
-
-1. 手机安装 [Expo Go](https://expo.dev/go)（iOS / Android）
-2. 本机：
+## 最快打开（Expo Go）
 
 ```bash
 cd zhengmu-mvp
@@ -15,21 +14,11 @@ npm install
 npx expo start
 ```
 
-3. 终端会出现 **QR code**；用 Expo Go 扫码（同一局域网），或按 `a`/`i` 开模拟器。
-4. 进入闪屏 →「打开 App」→「开始线性流程」。
+手机装 Expo Go → 扫终端二维码（同一 Wi‑Fi）。  
+扫不了：`npx expo start --tunnel`  
+无手机：`npx expo start --web`
 
-Tunnel（跨网）：`npx expo start --tunnel`
+## 演示数据
 
-## Web 预览（次要，仅便于截图/无手机时）
-
-```bash
-npx expo start --web
-```
-
-Web 用的是 React Native Web，仍是同一套 RN 源码，**不是**旧版 HTML phone-frame。
-
-## 工程要点
-
-- `App.js` + `src/data.js` + `src/theme.js`：证目流程 UI 与 Mock 数据
-- `app.json`：Expo 应用名「证目」
-- 不做一键可上庭文书；待核引用不可伪装已确认
+App Mock 读取 `demo-case/evidence-list.json` + `mock-purposes.json`（交通事故人伤）。  
+金标证明目的：`demo-case/proof-objectives-gold.md`。

@@ -19,6 +19,7 @@ import {
   SAMPLE_EVIDENCE,
   MOCK_PURPOSES,
   DEFAULT_CASE_NAME,
+  DEFAULT_CASE_TYPE,
   DEFAULT_FACTS,
 } from "./src/data";
 
@@ -122,7 +123,7 @@ export default function App() {
     return [
       "证据目录 · 证明目的（证目 Expo App 导出）",
       `案件：${caseName}`,
-      "案由：机动车交通事故责任纠纷 · 人伤",
+      `案由：${DEFAULT_CASE_TYPE}`,
       "",
       ...purposes.map((p, i) => {
         const ev = p.evidenceIds
@@ -541,7 +542,7 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>{caseName}</Text>
-          <Text style={styles.lede}>机动车交通事故责任纠纷 · 人伤</Text>
+          <Text style={styles.lede}>{DEFAULT_CASE_TYPE}</Text>
           <Text style={styles.itemBody}>证据组：{evidence.length}</Text>
           <Text style={styles.itemBody}>
             流程：{active ? STEPS[stepIndex(active)]?.label : "已收起"}
