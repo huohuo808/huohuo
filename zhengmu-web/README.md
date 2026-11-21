@@ -1,11 +1,16 @@
-# 证目 HTML 演示网页
+# 证目 · HTML Demo
 
-纯静态页面，浏览器打开即可，无需 Expo。
+单文件静态演示（`index.html`，样式与脚本已内联）。
+
+## 公开打开（免登录）
+
+https://htmlpreview.github.io/?https://github.com/huohuo808/huohuo/blob/cursor/zhengmu-mvp-demo-bd2f/zhengmu-web/index.html
+
+## 本地
 
 ```bash
-cd zhengmu-web
 python3 -m http.server 8090 --bind 0.0.0.0
-# 打开 http://127.0.0.1:8090/
+# http://127.0.0.1:8090/
 ```
 
-演示：建案 → 证据组 → 待证事实 → 生成 → 核验(待核) → 修订 → 确认 → 导出。
+主流程：建案 → 证据组 → 待证事实 → 生成 → 核验(待核) → 对照修订 → 律师确认 → 导出
